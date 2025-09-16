@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <h2>Register</h2>
+    <form method="POST">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="text" name="password" placeholder="Password" required>
+        <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="login.php">Login</a></p>
+
+    <?php
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        $username = trim($_POST['username']);
+        $raw_password = $_POST['password'];
+
+        $valid_pass = true;
+        $error = "";
+
+        // Password validation
+        if (strlen($raw_password) < 8 || strlen($raw_password) > 12) {
+            $error = "Password must be between 8 and 12 characters.";
+            $valid_pass = false;
+        } elseif (!preg_match('/\d/', $raw_password) || !preg_match('/[\W_]/', $raw_password)) {
+            $error = "Password must contain at least one number and one special character.";
+            $valid_pass = false;
+        }
+
+        // Duplicate username check
+        if (file_exists("users.txt")) {
+            $users = file("users.txt", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($users as $user) {
+                list($saved_username, $saved_password) = explode(":", $user);
+                if (strtolower($saved_username) === strtolower($username)) {
+                    $error = "Username already exists. Please choose another.";
+                    $valid_pass = false;
+                    break;
+                }
+            }
+        }
+
+        // Final decision
+        if (!$valid_pass) {
+            echo "<p style='color:red;'>$error</p>";
+        } else {
+            $password = md5($raw_password); // simple hash
+            $line = $username . ":" . $password . "\n";
+            file_put_contents("users.txt", $line, FILE_APPEND | LOCK_EX);
+            echo "<p style='color:green;'>User registered successfully.</p>";
+        }
+    }
+    ?>
+</body>
+</html>
