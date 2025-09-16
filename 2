@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login</h2>
+    <form method="POST">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+    <p>Don’t have an account? <a href="register.php">Register</a></p>
+
+    <?php
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        $username = trim($_POST['username']);
+        $raw_password = $_POST['password'];
+        $hashed_password = md5($raw_password);
+
+        $error = "";
+        $login_success = false;
+
+        // Check if file exists
+        if (!file_exists("users.txt")) {
+            $error = "No users registered yet. Please register first.";
+        } else {
+            $users = file("users.txt", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $user_found = false;
+
+            foreach ($users as $user) {
+                list($saved_username, $saved_password) = explode(":", $user);
+
+                if (strtolower($saved_username) === strtolower($username)) {
+                    $user_found = true;
+
+                    if ($saved_password === $hashed_password) {
+                        $login_success = true;
+                    } else {
+                        $error = "Incorrect password.";
+                    }
+                    break;
+                }
+            }
+
+            if (!$user_found) {
+                $error = "Username not found. Please register.";
+            }
+        }
+
+        // Show result
+        if ($login_success) {
+            echo "<p style='color:green;'>Login successful!</p>";
+        } else {
+            echo "<p style='color:red;'>$error</p>";
+        }
+    }
+    ?>
+</body>
+</html>
