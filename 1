@@ -1,57 +1,81 @@
+<?php
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = $_POST["username"];
+    $password = $_POST["password"];
+    $hashed = md5($password);
+
+    $users = file("users.txt", FILE_IGNORE_NEW_LINES);
+    $valid = false;
+
+    foreach ($users as $user) {
+        $parts = explode("|", $user);
+        if (count($parts) < 2) continue;
+
+        list($storedUser, $storedPass) = $parts;
+
+        if ($storedUser === $username && $storedPass === $hashed) {
+            $valid = true;
+            break;
+        }
+    }
+
+    if ($valid) {
+        $message = "<p class='success'>Login successful! Welcome, " . htmlspecialchars($username) . ".</p>";
+    } else {
+        $message = "<p class='error'>Invalid username or password.</p>";
+    }
+}
+?>
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Register</title>
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            width: 320px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h2 { margin-bottom: 15px; color: #333; }
+        input[type="text"], input[type="password"] {
+            width: 100%; padding: 10px; margin: 6px 0 15px;
+            border: 1px solid #ccc; border-radius: 5px;
+        }
+        button {
+            width: 100%; padding: 10px;
+            background: #28a745; border: none;
+            color: white; border-radius: 5px; cursor: pointer;
+        }
+        button:hover { background: #1e7e34; }
+        .message { margin-bottom: 15px; }
+        .error { color: #b30000; }
+        .success { color: #008000; }
+        p a { color: #28a745; text-decoration: none; }
+        p a:hover { text-decoration: underline; }
+    </style>
 </head>
 <body>
-    <h2>Register</h2>
-    <form method="POST">
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="text" name="password" placeholder="Password" required>
-        <button type="submit">Register</button>
-    </form>
-    <p>Already have an account? <a href="login.php">Login</a></p>
-
-    <?php
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $username = trim($_POST['username']);
-        $raw_password = $_POST['password'];
-
-        $valid_pass = true;
-        $error = "";
-
-        // Password validation
-        if (strlen($raw_password) < 8 || strlen($raw_password) > 12) {
-            $error = "Password must be between 8 and 12 characters.";
-            $valid_pass = false;
-        } elseif (!preg_match('/\d/', $raw_password) || !preg_match('/[\W_]/', $raw_password)) {
-            $error = "Password must contain at least one number and one special character.";
-            $valid_pass = false;
-        }
-
-        // Duplicate username check
-        if (file_exists("users.txt")) {
-            $users = file("users.txt", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            foreach ($users as $user) {
-                list($saved_username, $saved_password) = explode(":", $user);
-                if (strtolower($saved_username) === strtolower($username)) {
-                    $error = "Username already exists. Please choose another.";
-                    $valid_pass = false;
-                    break;
-                }
-            }
-        }
-
-        // Final decision
-        if (!$valid_pass) {
-            echo "<p style='color:red;'>$error</p>";
-        } else {
-            $password = md5($raw_password); // simple hash
-            $line = $username . ":" . $password . "\n";
-            file_put_contents("users.txt", $line, FILE_APPEND | LOCK_EX);
-            echo "<p style='color:green;'>User registered successfully.</p>";
-        }
-    }
-    ?>
+    <div class="container">
+        <?php if (!empty($message)) echo "<div class='message'>$message</div>"; ?>
+        <form method="post">
+            <h2>Login</h2>
+            <input type="text" name="username" placeholder="Enter username" required>
+            <input type="password" name="password" placeholder="Enter password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p>Don’t have an account? <a href="register.php">Register here</a></p>
+    </div>
 </body>
 </html>
